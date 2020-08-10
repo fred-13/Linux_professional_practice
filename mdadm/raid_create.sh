@@ -27,3 +27,16 @@ mount /dev/md10 /raid-10
 
 echo "DEVICE partitions" > /usr/lib/tmpfiles.d/mdadm.conf 
 mdadm --detail --scan --verbose | awk '/ARRAY/ {print}' >> /usr/lib/tmpfiles.d/mdadm.conf
+
+cat <<EOF >> /etc/fstab
+# RAID-0
+/dev/md0p1	/raid0/part1	ext4	defaults	0 0
+/dev/md0p2	/raid0/part2	ext4	defaults	0 0
+/dev/md0p3	/raid0/part3	ext4	defaults	0 0
+/dev/md0p4	/raid0/part4	ext4	defaults	0 0
+/dev/md0p5	/raid0/part5	ext4	defaults	0 0
+# RAID-1
+/dev/md1	/raid-1		ext4	defaults	0 0
+# RAID-10
+/dev/md10	/raid-10	ext4	defaults	0 0
+EOF
