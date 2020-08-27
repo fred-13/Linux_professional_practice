@@ -1,0 +1,22 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+Vagrant.configure(2) do |config|
+    config.vm.box = "centos/7"
+    config.vm.box_version = "1804.02"
+
+    config.vm.provider "virtualbox" do |v|
+      v.memory = 1024
+      v.cpus = 1
+      v.customize ["modifyvm", :id, "--boot1", "disk"]
+    end
+
+    config.vm.define "grub" do |grub|
+      grub.vm.network "private_network", ip: "192.168.50.10", virtualbox__intnet: "net1"
+      grub.vm.hostname = "grub"
+      grub.vm.provision "shell", path: "grub_rename_vgs.sh"
+      grub.vm.provision :reload
+      grub.vm.provision "shell", path: "grub_change_module.sh", reboot: true
+    end
+
+end
