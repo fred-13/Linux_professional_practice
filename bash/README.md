@@ -68,5 +68,6 @@ $error_status_codes
 Summ    |     Status codes
 $all_status_codes
 ```
-# example of received letter
+
+# Example of received letter
 <img src="log_result.jpg"><br>
