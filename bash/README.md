@@ -49,6 +49,7 @@ all_status_codes=$(cat access.log | grep "14/Aug/2019:0$i" | grep -o "\" [2-5][0
 ```
 ## Then sending mail parsing result this Nginx log with parsing log time interval:
 ```
+mail -s 'Nginx log parsing result' example@gmail.com << EOF
 ################## Parsing log time interval ##########################
         14/Aug/2019:0$i:00:00 - 14/Aug/2019:0$((i+1)):00:00
 
@@ -67,6 +68,7 @@ $error_status_codes
 ################ Response status codes of all requests ################
 Summ    |     Status codes
 $all_status_codes
+EOF
 ```
 
 # Example of received letter
