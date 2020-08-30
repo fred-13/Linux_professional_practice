@@ -1,4 +1,4 @@
-# NOTE: The entire course of work should be monitored in a verbose vagrant logging
+# NOTE: The entire course of work should be viewed in a detailed log on vagrant output.
 
 ## If running command "vagrant up" then starting provisioning inline script for install zfs and dependens utils:
 ```
