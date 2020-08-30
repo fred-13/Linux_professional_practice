@@ -1,0 +1,36 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+$bootstrap = <<SCRIPT
+yum install epel-release -y
+yum install -y mailx
+ln -s /bin/mailx /bin/email
+cat << EOF > /etc/mail.rc
+set smtp=smtps://smtp.gmail.com:465
+set smtp-auth=login
+set smtp-auth-user=example@gmail.com
+## in case you want to configure a Gmail account with 2Factors enabled, it is needed to you the Google APP PASSWORD:
+set smtp-auth-password=Google_APP_PASSWORD
+set ssl-verify=ignore
+EOF
+echo "4" > var.txt && chmod +x log_parser.sh
+echo "0 * * * *	root	/home/vagrant/log_parser.sh" >> /etc/crontab
+SCRIPT
+
+Vagrant.configure(2) do |config|
+    config.vm.box = "centos/8"
+
+    config.vm.provider "virtualbox" do |v|
+      v.memory = 1024
+      v.cpus = 1
+    end
+
+    config.vm.define "bash" do |bash|
+      bash.vm.network "private_network", ip: "192.168.50.10", virtualbox__intnet: "net1"
+      bash.vm.hostname = "bash"
+      bash.vm.provision "file", source: "./access.log", destination: "$HOME/access.log"
+      bash.vm.provision "file", source: "./log_parser.sh", destination: "$HOME/log_parser.sh"
+      bash.vm.provision "shell", inline: $bootstrap
+    end
+
+end
