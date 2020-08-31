@@ -36,6 +36,21 @@ echo "###### Compression type and ratio #######"
 zfs get compression,compressratio
 ```
 
+## As a result of the output, we see that the best compression algorithm is "gzip-9":
+```
+    zfs: ############ Size Files #############
+    zfs: 78K    /pool0/data1/War_and_Peace.txt
+    zfs: 36K    /pool0/data2/War_and_Peace.txt
+    zfs: 139K   /pool0/data3/War_and_Peace.txt
+    zfs: 51K    /pool0/data4/War_and_Peace.txt
+
+    zfs: ###### Compression type and ratio #######
+    zfs: pool0/data1  compression    lzjb      local
+    zfs: pool0/data2  compression    gzip-9    local
+    zfs: pool0/data3  compression    zle       local
+    zfs: pool0/data4  compression    lz4       local
+```
+
 ## Then provisioning script for second task:
 ```
 echo "############# Check zfs version #############"
