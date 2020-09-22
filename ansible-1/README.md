@@ -4,5 +4,5 @@ PLAY RECAP *********************************************************************
 ansible-1                  : ok=12   changed=9    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0
 ```
 
-## then click tyhis URL:
+## then click this URL:
 ## [http://localhost:8080](http://localhost:8080)
