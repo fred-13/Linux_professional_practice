@@ -46,7 +46,8 @@ Last login: Sun Oct  4 14:23:59 2020 from 192.168.50.1
 yum install -y yum-utils
 yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
 yum install docker-ce docker-ce-cli containerd.io -y
-systemctl status docker && systemctl enable docker && systemctl start docker
+systemctl enable docker
+systemctl start docker
 usermod -aG docker petya
 ```
 
