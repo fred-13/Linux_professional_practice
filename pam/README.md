@@ -21,8 +21,11 @@ cat <<'EOF' > /etc/pam_script
 if [[ `grep "admin.*$(echo $PAM_USER)" /etc/group | awk -F: '{print $1}' | grep -v 'printadmin'` ]]
   then
     exit 0
-  else
-    exit 1
+  elif [[ $(date | awk '{print $1}') == Sat ]] || [[ $(date | awk '{print $1}') == Sun ]]
+    then
+      exit 1
+    else
+      exit 0
 fi
 
 EOF
@@ -54,4 +57,9 @@ usermod -aG docker petya
 ## This command shows the rights of the user petya with docker:
 ```
 runuser -l petya -c 'docker version'
+```
+## And this command give permission docker service restart for Petya user:
+```
+echo 'petya ALL=(ALL) NOPASSWD: /bin/systemctl restart docker.service' >> /etc/sudoers
+sudo -H -u petya bash -c 'sudo systemctl restart docker.service && systemctl status docker.service | grep ago'
 ```

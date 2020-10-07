@@ -19,8 +19,11 @@ cat <<'EOF' > /etc/pam_script
 if [[ `grep "admin.*$(echo $PAM_USER)" /etc/group | awk -F: '{print $1}' | grep -v 'printadmin'` ]]
   then
     exit 0
-  else
-    exit 1
+  elif [[ $(date | awk '{print $1}') == Sat ]] || [[ $(date | awk '{print $1}') == Sun ]]
+    then
+      exit 1
+    else
+      exit 0
 fi
 
 EOF
