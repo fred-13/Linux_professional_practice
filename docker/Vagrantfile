@@ -1,0 +1,32 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+$bootstrap = <<SCRIPT
+yum install -y yum-utils
+yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+yum install docker-ce docker-ce-cli containerd.io -y
+systemctl enable docker
+systemctl start docker
+SCRIPT
+
+Vagrant.configure(2) do |config|
+    config.vm.box = "centos/7"
+
+    config.vm.provider "virtualbox" do |v|
+      v.memory = 1024
+      v.cpus = 1
+    end
+
+    config.vm.define "docker" do |docker|
+      docker.vm.network "forwarded_port", guest: 8181, host: 8181
+      docker.vm.network "forwarded_port", guest: 8282, host: 8282
+      docker.vm.network "private_network", ip: "192.168.50.10"
+      docker.vm.hostname = "docker"
+      docker.vm.provision "shell", inline: $bootstrap
+      docker.vm.provision "file", source: "./nginx-alpine", destination: "$HOME/nginx-alpine"
+      docker.vm.provision "shell", path: "nginx-alpine.sh"
+      docker.vm.provision "file", source: "./nginx-php", destination: "$HOME/nginx-php"
+      docker.vm.provision "shell", path: "nginx-php.sh"
+    end
+
+end

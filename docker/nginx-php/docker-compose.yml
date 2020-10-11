@@ -1,0 +1,23 @@
+version: '2'
+
+services:
+  nginx:
+    image: nginx:1.19.3
+    ports:
+      - "8282:80"
+    volumes:
+      - ./index.php:/opt/app/index.php
+      - ./default.conf:/etc/nginx/conf.d/default.conf
+    networks:
+      - php-app
+    depends_on:
+      - php
+  php:
+    image: php:fpm
+    volumes:
+      - ./index.php:/opt/app/index.php
+    networks:
+      - php-app
+
+networks:
+  php-app:
