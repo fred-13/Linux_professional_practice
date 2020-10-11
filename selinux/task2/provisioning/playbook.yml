@@ -10,6 +10,7 @@
       packages:
       - bind
       - bind-utils
+      - bind-chroot
       - ntp
       - policycoreutils-python
       - setools
@@ -18,10 +19,44 @@
 - hosts: ns01 # server ns01 provision
   become: true
   tasks:
+  - name: stop named service
+    systemd:
+      name: named
+      state: stopped
+      enabled: no
+
+  - name: copy named{.ca|.empty|.localhost|.loopback}
+    command: /usr/bin/cp /var/named/{{ item }} /var/named/chroot/var/named
+    with_items:
+      - "named.ca"
+      - "named.empty"
+      - "named.localhost"
+      - "named.loopback"
+
+  - name: set named{.ca|.empty|.localhost|.loopback} permissions
+    file:
+      path: /var/named/chroot/var/named/{{ item }}
+      owner: named
+      group: named
+      mode: 0640
+    with_items:
+      - "named.ca"
+      - "named.empty"
+      - "named.localhost"
+      - "named.loopback"
+
+  - name: Create a directory /var/named/chroot/var/named/data
+    file:
+      path: /var/named/chroot/var/named/data
+      owner: named
+      group: named
+      state: directory
+      mode: '0760'
+
   - name: copy named.conf
     copy:
       src: files/ns01/named.conf
-      dest: /etc/named.conf
+      dest: /var/named/chroot/etc/named.conf
       owner: root
       group: named
       mode: 0640
@@ -29,7 +64,7 @@
   - name: copy master zone dns.lab
     copy:
       src: "{{ item }}"
-      dest: /etc/named/
+      dest: /var/named/chroot/etc/named/
       owner: root
       group: named
       mode: 0660
@@ -39,7 +74,7 @@
   - name: copy dynamic zone ddns.lab
     copy:
       src: files/ns01/named.ddns.lab
-      dest: /etc/named/dynamic/
+      dest: /var/named/chroot/var/named/dynamic/
       owner: named
       group: named
       mode: 0660
@@ -47,7 +82,7 @@
   - name: copy dynamic zone ddns.lab.view1
     copy:
       src: files/ns01/named.ddns.lab.view1
-      dest: /etc/named/dynamic/
+      dest: /var/named/chroot/var/named/dynamic/
       owner: named
       group: named
       mode: 0660
@@ -55,7 +90,7 @@
   - name: copy master zone newdns.lab
     copy:
       src: files/ns01/named.newdns.lab
-      dest: /etc/named/
+      dest: /var/named/chroot/etc/named/
       owner: root
       group: named
       mode: 0660
@@ -63,7 +98,7 @@
   - name: copy rev zones
     copy:
       src: files/ns01/named.50.168.192.rev
-      dest: /etc/named/
+      dest: /var/named/chroot/etc/named/
       owner: root
       group: named
       mode: 0660
@@ -71,6 +106,59 @@
   - name: copy resolv.conf to server
     copy:
       src: files/ns01/resolv.conf
+      dest: /var/named/chroot/etc/resolv.conf
+      owner: root
+      group: root
+      mode: 0644
+
+  - name: copy transferkey to server
+    copy:
+      src: files/named.zonetransfer.key.special
+      dest: /var/named/chroot/etc/named.zonetransfer.key
+      owner: root
+      group: named
+      mode: 0644
+
+  - name: set /var/named/chroot/etc/named permissions
+    file:
+      path: /var/named/chroot/etc/named
+      owner: root
+      group: named
+      mode: 0670
+
+  - name: set /var/named/chroot/var/named/dynamic permissions
+    file:
+      path: /var/named/chroot/var/named/dynamic
+      owner: root
+      group: named
+      mode: 0670
+
+  - name: setsebool -P named_write_master_zones 1
+    seboolean:
+      name: named_write_master_zones
+      state: yes
+      persistent: yes
+
+  - name: ensure named is running and enabled
+    systemd:
+      name: named-chroot
+      state: restarted
+      enabled: yes
+
+- hosts: ns02 # server ns02 provision
+  become: true
+  tasks:
+  - name: copy named.conf
+    copy:
+      src: files/ns02/named.conf
+      dest: /etc/named.conf
+      owner: root
+      group: named
+      mode: 0640
+
+  - name: copy resolv.conf to the server
+    copy:
+      src: files/ns02/resolv.conf
       dest: /etc/resolv.conf
       owner: root
       group: root
@@ -91,13 +179,6 @@
       group: named
       mode: 0670
 
-  - name: set /etc/named/dynamic permissions
-    file:
-      path: /etc/named/dynamic
-      owner: root
-      group: named
-      mode: 0670
-
   - name: ensure named is running and enabled
     systemd:
       name: named
@@ -112,15 +193,15 @@
       src: files/client/resolv.conf
       dest: /etc/resolv.conf
       owner: root
-      group: named
+      group: root
       mode: 0644
 
   - name: copy rndc conf file
     copy:
       src: files/client/rndc.conf
       dest: /home/vagrant/rndc.conf
-      owner: root
-      group: named
+      owner: vagrant
+      group: vagrant
       mode: 0644
 
   - name: copy motd to the client
@@ -128,7 +209,7 @@
       src: files/client/motd
       dest: /etc/motd
       owner: root
-      group: named
+      group: root
       mode: 0644
 
   - name: copy transferkey to client
