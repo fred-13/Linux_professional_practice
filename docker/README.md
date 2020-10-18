@@ -20,4 +20,4 @@ docker-compose up -d
 ## Web will be available at this link: [http://nginx-php](http://localhost:8282)
 
 ## Questions: 1. Determine the difference between container and image. 2. Is it possible to build a kernel in a container?
-## The answers: 1 - an image is analogous to a virtual machine image. A container is a running (or stopped) instance of this image. 2 - Docker containers can't load kernel modules. You need a virtual machine with an isolated kernel for that.
+## The answers: 1 - an image is analogous to a virtual machine image. A container is a running (or stopped) instance of this image. 2 - it is possible to create a kernel in a docker container. This github repository demonstrates this functionality: [https://docker-kernel-builder](https://github.com/moul/docker-kernel-builder)
