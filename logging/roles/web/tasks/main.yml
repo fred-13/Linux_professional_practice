@@ -1,0 +1,73 @@
+---
+
+- name: Add nginx repo
+  copy: src=nginx.repo dest=/etc/yum.repos.d/
+
+- name: Install packages
+  yum: pkg={{ item }} state=latest
+  with_items:
+    - nginx
+    - httpd-tools
+
+- name: ensure nginx is running and enabled
+  service: name=nginx state=restarted enabled=yes
+
+### rsyslog ###
+
+- name: Install selinux python packages [RHEL]
+  package:
+    name:
+      - "libselinux-python"
+      - "policycoreutils-python"
+    state: present
+  register: _install_selinux_packages
+  until: _install_selinux_packages is success
+  retries: 5
+  delay: 2
+  when:
+    - (ansible_distribution | lower == "redhat") or
+      (ansible_distribution | lower == "centos")
+
+- name: JSON logging format
+  copy: src=json-template.conf dest=/etc/rsyslog.d/01-json-template.conf
+
+- name: Added rsyslog.d/critical_log.conf
+  copy: src=critical_log.conf dest=/etc/rsyslog.d/60-output.conf
+
+- name: Replace rsyslog.conf
+  copy: src=rsyslog.conf dest=/etc/rsyslog.conf
+
+# imfile(input module of rsyslog doesn't get access by /var/log/audit/)
+- name: Change selinux mode by syslogd_t on permissive
+  shell: semanage permissive -a syslogd_t
+
+- name: rsyslog.service restarted
+  service: name=rsyslog.service state=restarted
+
+- name: syslog of nginx to srvlog
+  copy: src=nginx_syslog.conf dest=/etc/rsyslog.d/nginx.conf
+
+- name: Ensure rsyslog is running and enabled
+  service: name=rsyslog state=restarted enabled=yes
+
+### auditd ###
+
+- name: Enabled audit of nginx.configs
+  copy: src=nginx.rules dest=/etc/audit/rules.d/nginx.rules
+
+- name: Ensure auditd is running and enabled
+  service: name=auditd state=restarted use=service
+
+### client of ELK
+
+- name: Repo elastic
+  copy: src=elastic.repo dest=/etc/yum.repos.d/elastic.repo
+
+- name: Install FileBeats client
+  yum: pkg=filebeat state=latest
+
+- name: Config has just replaced into filebeat/filebeat.yml
+  copy: src=filebeat.yml dest=/etc/filebeat/filebeat.yml
+
+- name: Ensure filebeat.service is running and enabled
+  service: name=filebeat state=restarted enabled=yes
