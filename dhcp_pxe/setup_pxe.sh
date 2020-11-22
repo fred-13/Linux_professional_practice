@@ -5,7 +5,8 @@ yum -y install epel-release
 
 yum -y install dhcp-server
 yum -y install tftp-server
-yum -y install nfs-utils
+yum -y install httpd
+# yum -y install nfs-utils
 firewall-cmd --add-service=tftp
 # disable selinux or permissive
 setenforce 0
@@ -34,9 +35,9 @@ subnet 10.0.0.0 netmask 255.255.255.0 {
 	}
 }
 EOF
-systemctl start dhcpd
+# systemctl start dhcpd
 
-systemctl start tftp.service
+# systemctl start tftp.service
 yum -y install syslinux-tftpboot.noarch
 mkdir /var/lib/tftpboot/pxelinux
 cp /tftpboot/pxelinux.0 /var/lib/tftpboot/pxelinux
@@ -59,11 +60,11 @@ LABEL linux
   menu label ^Install system
   menu default
   kernel images/CentOS-8.2/vmlinuz
-  append initrd=images/CentOS-8.2/initrd.img ip=enp0s3:dhcp inst.repo=nfs:10.0.0.20:/mnt/centos8-install
+  append initrd=images/CentOS-8.2/initrd.img ip=enp0s3:dhcp inst.repo=http://10.0.0.20/centos8-install/
 LABEL linux-auto
   menu label ^Auto install system
   kernel images/CentOS-8.2/vmlinuz
-  append initrd=images/CentOS-8.2/initrd.img ip=enp0s3:dhcp inst.ks=nfs:10.0.0.20:/home/vagrant/cfg/ks.cfg inst.repo=nfs:10.0.0.20:/mnt/centos8-autoinstall
+  append initrd=images/CentOS-8.2/initrd.img ip=enp0s3:dhcp inst.ks=http://10.0.0.20/ks.cfg inst.repo=http://10.0.0.20/centos8-autoinstall/
 LABEL vesa
   menu label Install system with ^basic video driver
   kernel images/CentOS-8.2/vmlinuz
@@ -87,19 +88,19 @@ cp {vmlinuz,initrd.img} /var/lib/tftpboot/pxelinux/images/CentOS-8.2/
 #
 
 curl -O http://ftp.mgts.by/pub/CentOS/8.2.2004/BaseOS/x86_64/os/images/boot.iso
-mkdir /mnt/centos8-install
-mount -t iso9660 boot.iso /mnt/centos8-install
-echo '/mnt/centos8-install *(ro)' > /etc/exports
-systemctl start nfs-server.service
+mkdir /var/www/html/centos8-install
+mount -o loop,ro -t iso9660 boot.iso /var/www/html/centos8-install
+# echo '/mnt/centos8-install *(ro)' > /etc/exports
+# systemctl start nfs-server.service
 
 autoinstall(){
   # to speedup replace URL with closest mirror
   curl -O http://ftp.mgts.by/pub/CentOS/8.2.2004/isos/x86_64/CentOS-8.2.2004-x86_64-minimal.iso
-  mkdir /mnt/centos8-autoinstall
-  mount -t iso9660 CentOS-8.2.2004-x86_64-minimal.iso /mnt/centos8-autoinstall
-  echo '/mnt/centos8-autoinstall *(ro)' >> /etc/exports
-  mkdir /home/vagrant/cfg
-cat > /home/vagrant/cfg/ks.cfg <<EOF
+  mkdir /var/www/html/centos8-autoinstall
+  mount -o loop,ro -t iso9660 CentOS-8.2.2004-x86_64-minimal.iso /var/www/html/centos8-autoinstall
+#   echo '/mnt/centos8-autoinstall *(ro)' >> /etc/exports
+#   mkdir /home/vagrant/cfg
+cat > /var/www/html/ks.cfg <<EOF
 #version=RHEL8
 ignoredisk --only-use=sda
 autopart --type=lvm
@@ -147,8 +148,11 @@ pwpolicy luks --minlen=6 --minquality=1 --notstrict --nochanges --notempty
 %end
 
 EOF
-echo '/home/vagrant/cfg *(ro)' >> /etc/exports
-  systemctl reload nfs-server.service
+# echo '/home/vagrant/cfg *(ro)' >> /etc/exports
+#   systemctl reload nfs-server.service
 }
 # uncomment to enable automatic installation
 autoinstall
+systemctl start dhcpd
+systemctl start tftp.service
+systemctl start httpd.service
