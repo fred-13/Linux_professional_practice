@@ -1,0 +1,27 @@
+---
+  - name: Asymmetric routing (part 2)
+    hosts: all
+    remote_user: vagrant
+    become: true
+    become_method: sudo
+    become_user: root
+    tasks:
+    - name: copy ospfd.conf with "cost 1000"
+      block:
+        - name: Your copy task
+          copy: src={{ item.src }} dest={{ item.dest }}
+          with_items:
+                - { src: 'ospfd_R1_cost.conf', dest: '/etc/quagga/ospfd.conf' }
+
+        - name: change file ownership ospfd.conf
+          file:
+              path: /etc/quagga/ospfd.conf
+              owner: quagga
+              group: quagga
+
+        - name: Restart service ospfd
+          service:
+              name: ospfd
+              state: restarted
+
+      when: ansible_hostname == "R1"

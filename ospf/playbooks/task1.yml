@@ -1,0 +1,9 @@
+---
+  - name: Install OSPF
+    hosts: all
+    remote_user: vagrant
+    become: true
+    become_method: sudo
+    become_user: root
+    roles:
+      - ospf
