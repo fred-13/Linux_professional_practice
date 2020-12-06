@@ -1,0 +1,83 @@
+# -*- mode: ruby -*-
+# vim: set ft=ruby :
+
+$preinstall = <<SCRIPT
+setenforce 0
+echo "net.ipv4.conf.all.forwarding=1"  >> /etc/sysctl.conf
+echo "net.ipv4.ip_forward=1" >> /etc/sysctl.conf
+sysctl -p /etc/sysctl.conf
+mkdir -p ~root/.ssh
+cp ~vagrant/.ssh/auth* ~root/.ssh
+sed -i 's/PasswordAuthentication no/PasswordAuthentication yes/g' /etc/ssh/sshd_config
+systemctl restart sshd
+systemctl restart network
+yum install -y epel-release
+yum install -y openvpn easy-rsa
+SCRIPT
+
+$server_certs = <<SCRIPT
+cd /usr/share/easy-rsa/3
+echo "yes" | /usr/share/easy-rsa/3/easyrsa init-pki
+echo "openvpnserver" | /usr/share/easy-rsa/3/easyrsa build-ca nopass
+echo "openvpnserver" | /usr/share/easy-rsa/3/easyrsa gen-req server nopass
+echo "yes" | /usr/share/easy-rsa/3/easyrsa sign-req server server
+/usr/share/easy-rsa/3/easyrsa gen-dh
+/usr/sbin/openvpn --genkey --secret ta.key
+cp -ar /usr/share/easy-rsa/3/pki/ca.crt /etc/openvpn
+cp -ar /usr/share/easy-rsa/3/pki/private/ca.key /etc/openvpn
+cp -ar /usr/share/easy-rsa/3/pki/issued/server.crt /etc/openvpn
+cp -ar /usr/share/easy-rsa/3/pki/private/server.key /etc/openvpn
+cp -ar /usr/share/easy-rsa/3/pki/dh.pem /etc/openvpn
+cp -ar /usr/share/easy-rsa/3/ta.key /etc/openvpn
+SCRIPT
+
+$client_certs = <<SCRIPT
+cd /usr/share/easy-rsa/3
+echo "client" | /usr/share/easy-rsa/3/easyrsa gen-req client nopass
+echo "yes" | /usr/share/easy-rsa/3/easyrsa sign-req client client
+cp -ar /usr/share/easy-rsa/3/pki/issued/client.crt /etc/openvpn
+cp -ar /usr/share/easy-rsa/3/pki/private/client.key /etc/openvpn
+mkdir /etc/openvpn/ccd && mkdir /var/log/openvpn
+echo "iroute 192.168.0.0 255.255.255.0" > /etc/openvpn/ccd/client
+chown -R vagrant:vagrant /etc/openvpn/{client.*,ca.crt}
+cp -v /home/vagrant/rsa_server.conf /etc/openvpn/server.conf
+SCRIPT
+
+MACHINES = {
+  :vpnServer => {
+        :box_name => "centos/7",
+        :net => [
+                   {ip: '192.168.0.1', adapter: 5, netmask: "255.255.255.0", virtualbox__intnet: "net"},
+
+                ]
+  },
+}
+
+Vagrant.configure("2") do |config|
+  MACHINES.each do |boxname, boxconfig|
+    config.vm.define boxname do |box|
+      box.vm.box = boxconfig[:box_name]
+      box.vm.host_name = boxname.to_s
+      config.vm.provider "virtualbox" do |v|
+        v.memory = 256
+      end
+      boxconfig[:net].each do |ipconf|
+        box.vm.network "private_network", ipconf
+        box.vm.network "public_network"
+      end
+
+      case boxname.to_s
+        when "vpnServer"
+          box.vm.provision "shell", inline: $preinstall
+          box.vm.provision "file", source: "./openvpn_rsa/rsa_server.conf", destination: "$HOME/rsa_server.conf"
+          box.vm.provision "shell", inline: $server_certs
+          box.vm.provision "shell", inline: $client_certs
+          box.vm.provision "shell", run: "always", inline: <<-SHELL
+            systemctl start openvpn@server
+            systemctl enable openvpn@server
+          SHELL
+      end
+    end
+  end
+
+end

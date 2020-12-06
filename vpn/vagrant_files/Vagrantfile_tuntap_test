@@ -6,7 +6,7 @@ MACHINES = {
   :tapServer => {
         :box_name => "centos/7",
         :net => [
-                  {ip: '192.168.0.1', adapter: 2, netmask: "255.255.255.0", virtualbox__intnet: "dir-net"},
+                  {ip: '192.168.0.1', adapter: 2, netmask: "255.255.255.0", virtualbox__intnet: "net"},
 
                 ]
   },
@@ -14,14 +14,14 @@ MACHINES = {
   :tapClient => {
         :box_name => "centos/7",
         :net => [
-                  {ip: '192.168.0.2', adapter: 2, netmask: "255.255.255.0", virtualbox__intnet: "dir-net"},
+                  {ip: '192.168.0.2', adapter: 2, netmask: "255.255.255.0", virtualbox__intnet: "net"},
                 ]
   },
 
   :tunServer => {
         :box_name => "centos/7",
         :net => [
-                  {ip: '192.168.0.3', adapter: 2, netmask: "255.255.255.0", virtualbox__intnet: "dir-net"},
+                  {ip: '192.168.0.3', adapter: 2, netmask: "255.255.255.0", virtualbox__intnet: "net"},
 
                 ]
   },
@@ -29,7 +29,7 @@ MACHINES = {
   :tunClient => {
         :box_name => "centos/7",
         :net => [
-                  {ip: '192.168.0.4', adapter: 2, netmask: "255.255.255.0", virtualbox__intnet: "dir-net"},
+                  {ip: '192.168.0.4', adapter: 2, netmask: "255.255.255.0", virtualbox__intnet: "net"},
                 ]
   },
 
