@@ -1,0 +1,33 @@
+---
+
+  - name: Copy config files on tapServer
+    block:
+      - name: Your copy task
+        copy: src={{ item.src }} dest={{ item.dest }}
+        with_items:
+            - { src: 'tapserver.conf', dest: '/etc/openvpn/server.conf' }
+    when: ansible_hostname == "tapServer"
+
+  - name: Copy config files on tapClient
+    block:
+      - name: Your copy task
+        copy: src={{ item.src }} dest={{ item.dest }}
+        with_items:
+            - { src: 'tapclient.conf', dest: '/etc/openvpn/client.conf' }
+    when: ansible_hostname == "tapClient"
+
+  - name: Copy config files on tunServer
+    block:
+      - name: Your copy task
+        copy: src={{ item.src }} dest={{ item.dest }}
+        with_items:
+            - { src: 'tunserver.conf', dest: '/etc/openvpn/server.conf' }
+    when: ansible_hostname == "tunServer"
+
+  - name: Copy config files on tunClient
+    block:
+      - name: Your copy task
+        copy: src={{ item.src }} dest={{ item.dest }}
+        with_items:
+            - { src: 'tunclient.conf', dest: '/etc/openvpn/client.conf' }
+    when: ansible_hostname == "tunClient"

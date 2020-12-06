@@ -1,0 +1,96 @@
+# -*- mode: ruby -*-
+# vim: set ft=ruby :
+
+MACHINES = {
+
+  :tapServer => {
+        :box_name => "centos/7",
+        :net => [
+                  {ip: '192.168.0.1', adapter: 2, netmask: "255.255.255.0", virtualbox__intnet: "dir-net"},
+
+                ]
+  },
+
+  :tapClient => {
+        :box_name => "centos/7",
+        :net => [
+                  {ip: '192.168.0.2', adapter: 2, netmask: "255.255.255.0", virtualbox__intnet: "dir-net"},
+                ]
+  },
+
+  :tunServer => {
+        :box_name => "centos/7",
+        :net => [
+                  {ip: '192.168.0.3', adapter: 2, netmask: "255.255.255.0", virtualbox__intnet: "dir-net"},
+
+                ]
+  },
+
+  :tunClient => {
+        :box_name => "centos/7",
+        :net => [
+                  {ip: '192.168.0.4', adapter: 2, netmask: "255.255.255.0", virtualbox__intnet: "dir-net"},
+                ]
+  },
+
+}
+
+Vagrant.configure("2") do |config|
+
+  MACHINES.each do |boxname, boxconfig|
+
+    config.vm.define boxname do |box|
+
+        box.vm.box = boxconfig[:box_name]
+        box.vm.host_name = boxname.to_s
+
+        config.vm.provider "virtualbox" do |v|
+          v.memory = 256
+        end
+
+        boxconfig[:net].each do |ipconf|
+          box.vm.network "private_network", ipconf
+        end
+
+        box.vm.provision "shell", inline: <<-SHELL
+          mkdir -p ~root/.ssh
+          cp ~vagrant/.ssh/auth* ~root/.ssh
+        SHELL
+
+        case boxname.to_s
+          when "tapServer"
+            box.vm.provision "shell", run: "always", inline: <<-SHELL
+              iperf -s &
+              SHELL
+          when "tapClient"
+            box.vm.provision "shell", run: "always", inline: <<-SHELL
+              echo "--------------------------------"
+              echo "Testing connect to tapServer"
+              echo "--------------------------------"
+              ping -c 5 10.1.1.1
+              echo "--------------------------------"
+              echo "Speed testing on tap interface"
+              echo "--------------------------------"
+              iperf -c 10.1.1.1 -t 20 -i 5
+              echo "--------------------------------"
+              SHELL
+          when "tunServer"
+            box.vm.provision "shell", run: "always", inline: <<-SHELL
+              iperf -s &
+              SHELL
+          when "tunClient"
+            box.vm.provision "shell", run: "always", inline: <<-SHELL
+              echo "--------------------------------"
+              echo "Testing connect to tunServer"
+              echo "--------------------------------"
+              ping -c 5 10.2.2.1
+              echo "--------------------------------"
+              echo "Speed testing on tap interface"
+              echo "--------------------------------"
+              iperf -c 10.2.2.1 -t 20 -i 5
+              echo "--------------------------------"
+              SHELL
+        end
+    end
+  end
+end
