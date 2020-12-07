@@ -28,7 +28,7 @@ $ ./taptun.sh test
     tapClient: 5 packets transmitted, 5 received, 0% packet loss, time 4008ms
     tapClient: rtt min/avg/max/mdev = 1.154/2.222/2.607/0.555 ms
     tapClient: --------------------------------
-    tapClient: Speed testing on tap interface
+    tapClient: Speed testing on TAP interface
     tapClient: --------------------------------
     tapClient: ------------------------------------------------------------
     tapClient: Client connecting to 10.1.1.1, TCP port 5001
@@ -59,7 +59,7 @@ $ ./taptun.sh test
     tunClient: 5 packets transmitted, 5 received, 0% packet loss, time 4009ms
     tunClient: rtt min/avg/max/mdev = 0.771/2.219/2.666/0.728 ms
     tunClient: --------------------------------
-    tunClient: Speed testing on tap interface
+    tunClient: Speed testing on TUN interface
     tunClient: --------------------------------
     tunClient: ------------------------------------------------------------
     tunClient: Client connecting to 10.2.2.1, TCP port 5001
