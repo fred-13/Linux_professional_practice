@@ -1,0 +1,58 @@
+---
+
+- name: Create directory for Flask
+  file:
+    path: "{{ webapp_dest_folder }}"
+    state: directory
+
+- name: Unpacked DEMO project
+  unarchive:
+    src: "demo-flask-uwsgi.tar.gz"
+    dest: "{{ webapp_dest_folder }}"
+    creates: "{{ webapp_dest_folder }}/wsgi.py"
+
+- name: Ensure permissions on webapp install
+  file:
+    path: "{{ webapp_dest_folder }}"
+    state: directory
+    owner: "{{ webapp_user | default('root') }}"
+    group: "{{ webapp_user | default('root') }}"
+    recurse: true
+  changed_when: false
+
+- name: Install system dependencies
+  import_tasks: install.redhat.yml
+  when: ansible_os_family == 'RedHat'
+
+- name: Install webapp dependencies
+  pip:
+    executable: pip3
+    requirements: "{{ webapp_requirements }}"
+  vars:
+      ansible_python_interpreter: /usr/bin/python3
+
+- name: Copy settings file
+  copy:
+    src: "{{ webapp_settings_file_path }}"
+    dest: "{{ webapp_dest_folder }}"
+  when: webapp_settings_file_path | length > 0
+
+- name: Create systemd service file
+  template:
+    src: webapp.service.j2
+    dest: "/etc/systemd/system/{{ webapp_name }}.service"
+
+- name: Start webapp service
+  systemd:
+    name: "{{ webapp_name }}.service"
+    enabled: true
+    daemon-reload: true
+    state: started
+
+- name: Disable SELinux
+  selinux:
+    state: disabled
+
+- name: Setup nginx
+  import_role:
+    name: roles/nginx
