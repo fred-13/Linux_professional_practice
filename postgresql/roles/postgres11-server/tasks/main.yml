@@ -8,9 +8,11 @@
   command: /usr/pgsql-11/bin/postgresql-11-setup initdb
   args:
     creates: /var/lib/pgsql/11/data/postgresql.conf
+  when: inventory_hostname == "master"
 
 - name: start database
   systemd:
     name: postgresql-11.service
     state: started
     enabled: yes
+  when: inventory_hostname == "master"

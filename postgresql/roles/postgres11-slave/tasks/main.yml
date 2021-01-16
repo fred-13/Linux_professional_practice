@@ -1,8 +1,31 @@
 ---
-- name: copy slave configuration file
+- name: coping pgpass file on host for connection without password
+  template:
+    src: templates/.pgpass
+    dest: /root/.pgpass
+    mode: 0600
+  register: input_pgpass
+
+- name: wipe the data directory on standby and make a consistent copy of the primary to standby
+  shell: |
+    rm -rf /var/lib/pgsql/11/data/* &&
+    pg_basebackup -h master.local -U streaming_barman -D /var/lib/pgsql/11/data/ &&
+    chown -R postgres:postgres /var/lib/pgsql/11/data/*
+  when: input_pgpass.changed
+
+- name: copy slave recovery configuration file
   template:
     src: templates/recovery.conf
     dest: /var/lib/pgsql/11/data/recovery.conf
+    mode: 0600
+    owner: postgres
+    group: postgres
+  notify: restart postgresql
+
+- name: copy slave pg_hba configuration file
+  template:
+    src: templates/pg_hba.conf
+    dest: /var/lib/pgsql/11/data/pg_hba.conf
     mode: 0600
     owner: postgres
     group: postgres

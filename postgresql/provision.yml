@@ -6,6 +6,7 @@
   vars_files:
     - global_vars.yml
   roles:
+    - epel
     - role: add-entry-to-hosts
       ip: '{{ master_ip }}'
       dns: '{{ master_hostname }}'
@@ -46,7 +47,6 @@
   vars_files:
     - global_vars.yml
   roles:
-    - epel
     - postgres11-repo
     - postgres11-client
     - barman-repo
