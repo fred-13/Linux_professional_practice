@@ -77,11 +77,12 @@ services:
       org.label-schema.group: "monitoring"
 
   grafana:
-    image: grafana/grafana:7.2.1
+    image: grafana/grafana:8.0.6
     container_name: grafana
     volumes:
       - grafana_data:/var/lib/grafana
       - ./grafana/provisioning:/etc/grafana/provisioning
+      - ./grafana/grafana.ini:/etc/grafana/grafana.ini
     environment:
       - GF_SECURITY_ADMIN_USER=${ADMIN_USER:-admin}
       - GF_SECURITY_ADMIN_PASSWORD=${ADMIN_PASSWORD:-admin}
@@ -93,6 +94,22 @@ services:
       - monitoring
     labels:
       org.label-schema.group: "monitoring"
+
+  cortex:
+    image: quay.io/cortexproject/cortex:master-e49102c
+    container_name: cortex
+    command:
+    - '-config.file=/etc/single-process-config-blocks.yaml'
+    volumes:
+    - ./cortex/single-process-config-blocks.yaml:/etc/single-process-config-blocks.yaml
+    - ./cortex/tsdb:/tmp/cortex/tsdb
+    - ./cortex/tsdb-sync:/tmp/cortex/tsdb-sync
+    - ./cortex/compactor:/tmp/cortex/compactor
+    - ./cortex/rules:/tmp/cortex/rules
+    networks:
+      - monitoring
+    ports:
+      - "9009:9009"
 
 networks:
   monitoring:

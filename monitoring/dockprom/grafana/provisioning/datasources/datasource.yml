@@ -9,3 +9,8 @@ datasources:
     basicAuth: false
     isDefault: true
     editable: true
+  - name: Alertmanager
+    type: alertmanager
+    url: http://cortex:9009/prometheus
+    access: proxy
+    basicAuth: false
